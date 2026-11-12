@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gramma</title>
+<meta name="description" content="Gramma: learn the Greek alphabet by matching capital, small letter and name.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Besley:wght@500&family=Martian+Mono&family=Noto+Serif:wght@500&family=Onest:wght@400;500&display=swap">
+<style>
+/* =====================================================================
+   1. Tokens
+   ===================================================================== */
+:root {
+  --color-bg: #F3F1EC;
+  --color-text: #16161A;
+  --color-muted: #6B6B70;
+  --color-accent: #6B7A3A;
+  --color-accent-strong: #56632C;
+  --color-line: #D9D6CD;
+  --color-surface: #EAE7DF;
+  --color-wrong: #9A4A32;           /* functional state only: wrong picks */
+
+  --font-display: 'Besley', Georgia, serif;
+  --font-body: 'Onest', system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, 'DejaVu Sans Mono', monospace;
+  /* Greek glyphs: fonts with full Greek coverage, Linux-friendly fallbacks */
+  --font-greek: 'Noto Serif', 'GFS Didot', 'DejaVu Serif', 'Liberation Serif', 'Times New Roman', serif;
+
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --space-9: 96px; --space-10: 128px;
+
+  --radius: 2px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration: 200ms;
+  --max-width: 1080px;
+  --gutter: 24px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #16161A;
+    --color-text: #F3F1EC;
+    --color-muted: #A3A3A8;
+    --color-accent: #A9B86A;
+    --color-accent-strong: #A9B86A;
+    --color-line: #2E2E33;
+    --color-surface: #1F1F24;
+    --color-wrong: #D98B6F;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #16161A;
+  --color-text: #F3F1EC;
+  --color-muted: #A3A3A8;
+  --color-accent: #A9B86A;
+  --color-accent-strong: #A9B86A;
+  --color-line: #2E2E33;
+  --color-surface: #1F1F24;
+  --color-wrong: #D98B6F;
+  color-scheme: dark;
+}
+@media (min-width: 720px) { :root { --gutter: 48px; } }
+
+/* =====================================================================
+   2. Base
+   ===================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 720px) { body { font-size: 17px; } }
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+h1 { font-size: 36px; line-height: 1.1; }
+h2 { font-size: 28px; line-height: 1.15; }
+@media (min-width: 720px) { h1 { font-size: 56px; } h2 { font-size: 36px; } }
+h3 { font-size: 18px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; margin: 0; }
+@media (min-width: 720px) { h3 { font-size: 20px; } }
+p { margin: 0; }
+em, i { font-style: normal; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--color-accent-strong); outline-offset: 2px; }
+.label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-accent-strong);
+}
+.meta { font-family: var(--font-mono); font-size: 12px; line-height: 1.4; color: var(--color-muted); }
+.muted { color: var(--color-muted); }
+.small { font-size: 15px; line-height: 1.5; }
+.greek { font-family: var(--font-greek); font-weight: 500; }
+.wrap { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--gutter); }
+.hidden { display: none !important; }
+
+/* =====================================================================
+   3. Header
+   ===================================================================== */
+.top { border-bottom: 1px solid var(--color-line); }
+.top-inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; }
+.brand {
+  display: inline-flex; align-items: baseline; gap: var(--space-2);
+  font-family: var(--font-display); font-weight: 500; font-size: 22px; letter-spacing: -0.01em;
+  background: none; border: 0; padding: 0; cursor: pointer; min-height: 44px; align-items: center;
+}
+.brand .greek { color: var(--color-accent); font-size: 24px; }
+.nav { display: flex; align-items: center; gap: var(--space-1); }
+.nav-btn {
+  min-height: 44px; padding: 0 var(--space-3);
+  background: none; border: 0; border-radius: var(--radius); cursor: pointer;
+  font-size: 15px; font-weight: 400; color: var(--color-muted);
+  transition: color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+.nav-btn:hover { color: var(--color-text); background: var(--color-surface); }
+.nav-btn[aria-current="page"] { color: var(--color-text); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; text-decoration-color: var(--color-accent); }
+.theme-btn { font-family: var(--font-mono); font-size: 12px; }
+
+/* =====================================================================
+   4. Buttons and controls
+   ===================================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: 44px; padding: 12px 20px;
+  border-radius: var(--radius); border: 1px solid var(--color-text);
+  font-family: var(--font-body); font-size: 15px; font-weight: 500; line-height: 1.2;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+.btn-primary { background: var(--color-text); color: var(--color-bg); }
+.btn-primary:hover { background: var(--color-accent-strong); border-color: var(--color-accent-strong); }
+.btn-secondary { background: transparent; color: var(--color-text); }
+.btn-secondary:hover { background: var(--color-surface); }
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+.seg { display: inline-flex; border: 1px solid var(--color-line); border-radius: var(--radius); }
+.seg button {
+  min-width: 44px; min-height: 44px; padding: 0 var(--space-4);
+  background: none; border: 0; border-left: 1px solid var(--color-line); cursor: pointer;
+  font-size: 15px; color: var(--color-muted);
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+.seg button:first-child { border-left: 0; }
+.seg button:hover { color: var(--color-text); background: var(--color-surface); }
+.seg button[aria-pressed="true"] { background: var(--color-text); color: var(--color-bg); }
+
+.speak {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; flex: none;
+  background: none; border: 0; border-radius: var(--radius); cursor: pointer;
+  color: var(--color-muted);
+  transition: color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+.speak:hover { color: var(--color-accent-strong); background: var(--color-surface); }
+.speak svg { width: 18px; height: 18px; }
+.no-speech .speak { display: none; }
+
+/* =====================================================================
+   5. Layout pieces
+   ===================================================================== */
+#app { padding-top: var(--space-7); padding-bottom: var(--space-8); }
+@media (min-width: 720px) { #app { padding-top: var(--space-8); padding-bottom: var(--space-9); } }
+.view > * + * { margin-top: var(--space-5); }
+.view .label + h1, .view .label + h2 { margin-top: var(--space-3); }
+.lede { max-width: 65ch; }
+.section { margin-top: var(--space-8) !important; }
+.section > * + * { margin-top: var(--space-4); }
+
+.stats { display: flex; flex-wrap: wrap; gap: var(--space-5) var(--space-7); padding: var(--space-5) 0; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+.stat { display: flex; flex-direction: column; gap: var(--space-1); position: relative; }
+.stat-num { font-family: var(--font-display); font-weight: 500; font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; }
+
+.rows { border-top: 1px solid var(--color-line); }
+.row { display: flex; gap: var(--space-4); align-items: center; justify-content: space-between; flex-wrap: wrap; padding: var(--space-4) 0; border-bottom: 1px solid var(--color-line); }
+.row-text { flex: 1 1 260px; max-width: 65ch; }
+.row-text .small { color: var(--color-muted); margin-top: var(--space-1); }
+
+.mode-row { cursor: pointer; }
+.mode-row input { position: absolute; opacity: 0; pointer-events: none; }
+.mode-mark { font-family: var(--font-mono); font-size: 12px; color: var(--color-muted); }
+.mode-row:has(input:checked) .mode-mark { color: var(--color-accent-strong); }
+
+.note { font-size: 15px; line-height: 1.5; color: var(--color-muted); max-width: 65ch; }
+
+/* =====================================================================
+   6. Play: HUD and board
+   ===================================================================== */
+.hud { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.hud .stats { border: 0; padding: 0; gap: var(--space-6); }
+.hud .stat-num { font-size: 24px; }
+.bar { height: 1px; background: var(--color-line); position: relative; }
+.bar > span { position: absolute; left: 0; top: -1px; height: 3px; background: var(--color-accent); width: 0; transition: width 250ms var(--ease); }
+.trouble { display: flex; gap: var(--space-3); align-items: baseline; flex-wrap: wrap; }
+.float {
+  position: absolute; left: 100%; top: 0; margin-left: var(--space-2);
+  font-family: var(--font-mono); font-size: 12px; color: var(--color-accent-strong);
+  animation: float-up 700ms var(--ease) forwards; pointer-events: none; white-space: nowrap;
+}
+@keyframes float-up { from { opacity: 0; transform: translateY(4px); } 30% { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
+
+.board {
+  display: grid; gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (min-width: 720px) { .board { gap: var(--space-3); grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); } }
+.tile-wrap { position: relative; }
+.tile {
+  position: relative; width: 100%; min-height: 96px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1);
+  padding: var(--space-6) var(--space-2) var(--space-4);
+  background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius);
+  cursor: pointer; text-align: center;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease), opacity 250ms var(--ease), transform var(--duration) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 720px) { .tile { min-height: 120px; } }
+.tile:hover { background: var(--color-surface); }
+.tile .kind { position: absolute; top: var(--space-2); left: var(--space-2); font-family: var(--font-mono); font-size: 12px; line-height: 1.4; color: var(--color-muted); }
+.tile .glyph { font-family: var(--font-greek); font-weight: 500; font-size: 40px; line-height: 1; }
+@media (min-width: 720px) { .tile .glyph { font-size: 48px; } }
+.tile .nm { font-size: 18px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+@media (min-width: 720px) { .tile .nm { font-size: 20px; } }
+.tile .say { font-family: var(--font-mono); font-size: 12px; line-height: 1.4; color: var(--color-muted); overflow-wrap: anywhere; }
+.tile-wrap .speak { position: absolute; top: 0; right: 0; }
+
+.tile.is-selected { border-color: var(--color-text); background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-text); transform: translateY(-2px); }
+.tile.is-wrong { border-color: var(--color-wrong); box-shadow: inset 0 0 0 1px var(--color-wrong); animation: shake 380ms var(--ease); }
+.tile.is-matched { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); animation: pop 260ms var(--ease); cursor: default; }
+.tile.is-matched .glyph, .tile.is-matched .nm { color: var(--color-accent); }
+.tile.is-matched .kind::after { content: " ✓"; color: var(--color-accent-strong); }
+.tile.is-locked { opacity: 0.45; box-shadow: none; background: transparent; }
+.tile.is-locked:hover { background: transparent; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+@keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+/* =====================================================================
+   7. Summary and progress
+   ===================================================================== */
+.review { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-2) var(--space-5); align-items: start; padding: var(--space-5) 0; border-bottom: 1px solid var(--color-line); }
+.review-glyphs { font-family: var(--font-greek); font-weight: 500; font-size: 36px; line-height: 1; min-width: 3.2em; color: var(--color-accent); }
+.review-body > * + * { margin-top: var(--space-1); }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+.legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
+.sw { width: 14px; height: 14px; border-radius: var(--radius); border: 1px solid var(--color-line); display: inline-block; }
+.sw.m-new { border-style: dashed; border-color: var(--color-muted); }
+.sw.m-learning { background: var(--color-surface); border-color: var(--color-muted); }
+.sw.m-mastered { border-color: var(--color-accent); box-shadow: inset 0 0 0 3px var(--color-accent); }
+
+.alpha { display: grid; gap: var(--space-2); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (min-width: 560px) { .alpha { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .alpha { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: var(--space-3); } }
+.atile {
+  min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1);
+  padding: var(--space-3) var(--space-1);
+  background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius); cursor: pointer;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+}
+.atile:hover { background: var(--color-surface); }
+.atile .glyph { font-family: var(--font-greek); font-weight: 500; font-size: 28px; line-height: 1; }
+.atile .meta { font-size: 12px; }
+.atile.m-new { border-style: dashed; }
+.atile.m-new .glyph { color: var(--color-muted); }
+.atile.m-learning { background: var(--color-surface); }
+.atile.m-mastered { border-color: var(--color-accent); }
+.atile.m-mastered .glyph { color: var(--color-accent); }
+.atile[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--color-text); border-color: var(--color-text); }
+.meter { display: flex; gap: 2px; margin-top: var(--space-1); }
+.meter i { width: 8px; height: 3px; background: var(--color-line); }
+.meter i.on { background: var(--color-accent-strong); }
+
+.detail { display: grid; grid-template-columns: auto 1fr; gap: var(--space-5); align-items: start; padding: var(--space-5) 0; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+.detail-glyphs { font-family: var(--font-greek); font-weight: 500; font-size: 56px; line-height: 1; letter-spacing: 0.05em; }
+.detail-body > * + * { margin-top: var(--space-2); }
+.detail-title { display: flex; align-items: center; gap: var(--space-2); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-1) var(--space-4); }
+@media (max-width: 520px) { .detail { grid-template-columns: 1fr; } .review { grid-template-columns: 1fr auto; } .review-glyphs { grid-column: 1 / -1; } }
+
+.confirm { padding: var(--space-5); border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-surface); max-width: 65ch; }
+.confirm > * + * { margin-top: var(--space-4); }
+
+.toast { position: fixed; left: 50%; bottom: var(--space-5); transform: translateX(-50%); background: var(--color-text); color: var(--color-bg); padding: var(--space-3) var(--space-4); border-radius: var(--radius); font-size: 15px; max-width: calc(100% - 48px); }
+
+/* Fade-in for each new view (once) */
+.view { animation: view-in 250ms var(--ease); }
+@keyframes view-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .tile.is-selected { transform: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <button class="brand" data-nav="lobby" aria-label="Gramma home"><span class="greek" aria-hidden="true">γ</span>Gramma</button>
+    <nav class="nav" aria-label="Main">
+      <button class="nav-btn" data-nav="lobby">Play</button>
+      <button class="nav-btn" data-nav="progress">Progress</button>
+      <button class="nav-btn theme-btn" id="themeBtn" aria-label="Change colour theme">auto</button>
+    </nav>
+  </div>
+</header>
+<main id="app" class="wrap" aria-live="polite"></main>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   1. DATA — edit letters here.
+   name/say: English academic letter name + pronunciation hint (math & science usage)
+   tts:      spelling fed to English speech synthesis so it sounds right
+   modern:   Modern Greek name + pronunciation (stored for later modes)
+   note:     optional "trap" hint shown when you miss the letter
+   ===================================================================== */
+const LETTERS = [
+  { id: 'alpha',   upper: 'Α', lower: 'α', name: 'alpha',   say: 'AL-fuh',       tts: 'alpha',     modern: { name: 'άλφα',    say: 'AL-fa' } },
+  { id: 'beta',    upper: 'Β', lower: 'β', name: 'beta',    say: 'BAY-tuh',      tts: 'bayta',     modern: { name: 'βήτα',    say: 'VEE-ta' },
+    note: 'Capital Β is a B look-alike. Small β has a tail that drops below the line.' },
+  { id: 'gamma',   upper: 'Γ', lower: 'γ', name: 'gamma',   say: 'GAM-uh',       tts: 'gamma',     modern: { name: 'γάμμα',   say: 'GHA-ma' },
+    note: 'γ looks like a Latin y, but it is a "g" sound.' },
+  { id: 'delta',   upper: 'Δ', lower: 'δ', name: 'delta',   say: 'DEL-tuh',      tts: 'delta',     modern: { name: 'δέλτα',   say: 'DHEL-ta' } },
+  { id: 'epsilon', upper: 'Ε', lower: 'ε', name: 'epsilon', say: 'EP-sih-lon',   tts: 'epsilon',   modern: { name: 'έψιλον',  say: 'EP-see-lon' } },
+  { id: 'zeta',    upper: 'Ζ', lower: 'ζ', name: 'zeta',    say: 'ZAY-tuh',      tts: 'zayta',     modern: { name: 'ζήτα',    say: 'ZEE-ta' },
+    note: 'ζ has a single curl. ξ (xi) stacks an extra loop on top.' },
+  { id: 'eta',     upper: 'Η', lower: 'η', name: 'eta',     say: 'AY-tuh',       tts: 'ayta',      modern: { name: 'ήτα',     say: 'EE-ta' },
+    note: 'Η looks like H and η looks like n, but this is eta: not an "h" or an "n".' },
+  { id: 'theta',   upper: 'Θ', lower: 'θ', name: 'theta',   say: 'THAY-tuh',     tts: 'thayta',    modern: { name: 'θήτα',    say: 'THEE-ta' } },
+  { id: 'iota',    upper: 'Ι', lower: 'ι', name: 'iota',    say: 'eye-OH-tuh',   tts: 'eye oh ta', modern: { name: 'γιώτα',   say: 'YO-ta' } },
+  { id: 'kappa',   upper: 'Κ', lower: 'κ', name: 'kappa',   say: 'KAP-uh',       tts: 'kappa',     modern: { name: 'κάππα',   say: 'KA-pa' } },
+  { id: 'lambda',  upper: 'Λ', lower: 'λ', name: 'lambda',  say: 'LAM-duh',      tts: 'lambda',    modern: { name: 'λάμδα',   say: 'LAM-dha' } },
+  { id: 'mu',      upper: 'Μ', lower: 'μ', name: 'mu',      say: 'myoo',         tts: 'mew',       modern: { name: 'μι',      say: 'mee' } },
+  { id: 'nu',      upper: 'Ν', lower: 'ν', name: 'nu',      say: 'noo',          tts: 'new',       modern: { name: 'νι',      say: 'nee' },
+    note: 'ν looks like a Latin v, but it is an "n" sound. Pointed bottom = nu, round bottom = υ (upsilon).' },
+  { id: 'xi',      upper: 'Ξ', lower: 'ξ', name: 'xi',      say: 'ksye (or zye)', tts: 'ksai',     modern: { name: 'ξι',      say: 'ksee' },
+    note: 'ξ has an extra loop on top of a ζ-like body. Think "ks".' },
+  { id: 'omicron', upper: 'Ο', lower: 'ο', name: 'omicron', say: 'OM-ih-kron',   tts: 'omicron',   modern: { name: 'όμικρον', say: 'O-mee-kron' },
+    note: 'ο is the "small o"; ω (omega) is the "big o".' },
+  { id: 'pi',      upper: 'Π', lower: 'π', name: 'pi',      say: 'pye',          tts: 'pie',       modern: { name: 'πι',      say: 'pee' } },
+  { id: 'rho',     upper: 'Ρ', lower: 'ρ', name: 'rho',     say: 'roh',          tts: 'row',       modern: { name: 'ρο',      say: 'ro' },
+    note: 'Ρ and ρ look like P and p, but this is an "r" sound.' },
+  { id: 'sigma',   upper: 'Σ', lower: 'σ', alt: 'ς', name: 'sigma', say: 'SIG-muh', tts: 'sigma', modern: { name: 'σίγμα',   say: 'SEEG-ma' },
+    note: 'Σ, σ and ς are all sigma. ς is the form used only at the end of a word.' },
+  { id: 'tau',     upper: 'Τ', lower: 'τ', name: 'tau',     say: 'taw (or tow)', tts: 'taw',       modern: { name: 'ταυ',     say: 'taf' } },
+  { id: 'upsilon', upper: 'Υ', lower: 'υ', name: 'upsilon', say: 'OOP-sih-lon',  tts: 'oopsilon',  modern: { name: 'ύψιλον',  say: 'EE-psee-lon' },
+    note: 'υ has a round bottom like u. ν (nu) is pointed like v.' },
+  { id: 'phi',     upper: 'Φ', lower: 'φ', name: 'phi',     say: 'fye',          tts: 'fie',       modern: { name: 'φι',      say: 'fee' },
+    note: 'φ is a circle with a stem through it. ψ (psi) is a trident.' },
+  { id: 'chi',     upper: 'Χ', lower: 'χ', name: 'chi',     say: 'kye',          tts: 'kye',       modern: { name: 'χι',      say: 'hee' },
+    note: 'Χ and χ look like X and x, but this is chi ("kye"), not "ex".' },
+  { id: 'psi',     upper: 'Ψ', lower: 'ψ', name: 'psi',     say: 'sye',          tts: 'sigh',      modern: { name: 'ψι',      say: 'psee' },
+    note: 'ψ is the trident. φ (phi) is the circle with a stem.' },
+  { id: 'omega',   upper: 'Ω', lower: 'ω', name: 'omega',   say: 'oh-MAY-guh',   tts: 'oh may ga', modern: { name: 'ωμέγα',   say: 'o-MEH-gha' },
+    note: 'ω looks like a Latin w, but it is a long "o", the last letter.' },
+];
+
+/* Groups the "Trouble letters" setting deliberately puts in one round.
+   finalSigma: chance (0–1) that sigma's small tile shows ς instead of σ. */
+const TROUBLE_GROUPS = [
+  { id: 'latin-lower', label: 'Latin look-alikes', ids: ['nu', 'rho', 'eta', 'chi', 'omega', 'gamma'],
+    note: 'ν ρ η χ ω γ look like v p n x w y, and none of them sound like those letters.' },
+  { id: 'latin-upper', label: 'Latin capitals', ids: ['eta', 'rho', 'chi', 'beta', 'zeta'],
+    note: 'Η Ρ Χ Β Ζ look like H P X B Z. Only Β and Ζ keep a similar sound.' },
+  { id: 'zeta-xi', label: 'ζ vs ξ', ids: ['zeta', 'xi'],
+    note: 'ζ has one curl; ξ has an extra loop on top.' },
+  { id: 'nu-upsilon', label: 'ν vs υ', ids: ['nu', 'upsilon'],
+    note: 'ν is pointed (nu, an "n"); υ is round (upsilon).' },
+  { id: 'sigma', label: 'Σ σ ς', ids: ['sigma', 'zeta', 'xi', 'omicron'], finalSigma: 0.6,
+    note: 'Σ, σ and ς are all sigma. ς only appears at the end of a word, so don\'t confuse it with ζ.' },
+];
+
+const DEFAULT_FINAL_SIGMA = 0.25;
+const BY_ID = Object.fromEntries(LETTERS.map(l => [l.id, l]));
+
+/* =====================================================================
+   2. STORAGE — localStorage, always wrapped so the app works without it
+   ===================================================================== */
+const STORAGE_KEY = 'gramma.v1';
+const Store = {
+  available: true,
+  load() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { this.available = false; return null; }
+  },
+  save(data) {
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    catch (e) { this.available = false; }
+  },
+};
+
+function defaultState() {
+  return {
+    version: 1,
+    letters: {},          // id -> { seen, hits, misses, box, last }
+    confusions: {},       // 'a|b' (sorted ids) -> count
+    stats: { rounds: 0, bestStreak: 0, totalScore: 0 },
+    settings: { mode: 'triple', trouble: false, roundSize: 5, speakOnMatch: true, theme: 'auto' },
+  };
+}
+function loadState() {
+  const d = defaultState();
+  const s = Store.load();
+  if (!s || typeof s !== 'object') return d;
+  return {
+    ...d,
+    letters: s.letters && typeof s.letters === 'object' ? s.letters : {},
+    confusions: s.confusions && typeof s.confusions === 'object' ? s.confusions : {},
+    stats: { ...d.stats, ...(s.stats || {}) },
+    settings: { ...d.settings, ...(s.settings || {}) },
+  };
+}
+let state = loadState();
+const save = () => Store.save(state);
+const session = { streak: 0 };   // in-memory only: streak carries across rounds
+
+/* =====================================================================
+   3. PROGRESS — Leitner-style spaced repetition
+   box 0..5: +1 for a clean round, -2 for a miss (back to 0 for 2+ misses).
+   ===================================================================== */
+const MASTERED_BOX = 4, MAX_BOX = 5;
+const BOX_WEIGHT = [10, 7, 5, 3, 1.2, 0.6];
+const pairKey = (a, b) => [a, b].sort().join('|');
+
+const Progress = {
+  rec(id) { return state.letters[id] || { seen: 0, hits: 0, misses: 0, box: 0, last: 0 }; },
+  status(id) {
+    const r = this.rec(id);
+    if (!r.seen) return 'new';
+    return r.box >= MASTERED_BOX ? 'mastered' : 'learning';
+  },
+  accuracy(id) {
+    const r = this.rec(id), t = r.hits + r.misses;
+    return t ? r.hits / t : null;
+  },
+  counts() {
+    const c = { new: 0, learning: 0, mastered: 0 };
+    LETTERS.forEach(l => c[this.status(l.id)]++);
+    return c;
+  },
+  /* How much a seen letter "wants" to appear: low box, long gap, poor accuracy => higher. */
+  weight(id) {
+    const r = this.rec(id);
+    if (!r.seen) return 6;
+    const since = Math.max(0, state.stats.rounds - r.last);
+    const acc = this.accuracy(id);
+    return BOX_WEIGHT[r.box] * (1 + Math.min(since, 8) * 0.15) * (acc == null ? 1 : 2 - acc);
+  },
+  confusionsFor(id) {
+    return Object.entries(state.confusions)
+      .map(([k, n]) => ({ ids: k.split('|'), n }))
+      .filter(c => c.ids.includes(id))
+      .sort((a, b) => b.n - a.n);
+  },
+  topConfusions(k) {
+    return Object.entries(state.confusions)
+      .map(([key, n]) => ({ ids: key.split('|'), n }))
+      .filter(c => c.ids.every(id => BY_ID[id]))
+      .sort((a, b) => b.n - a.n)
+      .slice(0, k);
+  },
+  /* Called once per finished round. Returns status changes for the summary. */
+  applyRound(round) {
+    state.stats.rounds += 1;
+    const roundNo = state.stats.rounds;
+    const changes = [];
+    for (const l of round.letters) {
+      const before = this.status(l.id);
+      const r = { ...this.rec(l.id) };
+      const m = round.misses[l.id] || 0;
+      r.seen += 1;
+      r.last = roundNo;
+      r.hits += round.hits[l.id] ? 1 : 0;
+      r.misses += m;
+      r.box = m === 0 ? Math.min(MAX_BOX, r.box + 1) : (m > 1 ? 0 : Math.max(0, r.box - 2));
+      state.letters[l.id] = r;
+      const after = this.status(l.id);
+      if (before !== after) changes.push({ id: l.id, before, after });
+    }
+    for (const [k, n] of Object.entries(round.confusions)) {
+      state.confusions[k] = (state.confusions[k] || 0) + n;
+    }
+    state.stats.totalScore += round.score;
+    state.stats.bestStreak = Math.max(state.stats.bestStreak, round.bestStreak);
+    save();
+    return changes;
+  },
+  reset() {
+    state = { ...defaultState(), settings: state.settings };
+    session.streak = 0;
+    save();
+  },
+};
+
+/* =====================================================================
+   4. PICKER — chooses the letters for a round
+   ===================================================================== */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function weightedPick(items, weightOf) {
+  const ws = items.map(weightOf);
+  const total = ws.reduce((s, w) => s + w, 0);
+  if (!total) return items[Math.floor(Math.random() * items.length)];
+  let r = Math.random() * total;
+  for (let i = 0; i < items.length; i++) { r -= ws[i]; if (r <= 0) return items[i]; }
+  return items[items.length - 1];
+}
+
+const Picker = {
+  /* Built-in groups plus your personal frequent mix-ups. */
+  troubleGroups() {
+    const mine = Progress.topConfusions(3).filter(c => c.n >= 2).map(c => {
+      const [a, b] = c.ids.map(id => BY_ID[id]);
+      return { id: 'mine:' + c.ids.join('|'), label: `${a.lower} vs ${b.lower}`, ids: c.ids, mine: true,
+               note: `Your own mix-up: ${a.name} and ${b.name}, ${c.n} times so far.` };
+    });
+    return TROUBLE_GROUPS.concat(mine);
+  },
+  pick(n, { trouble }) {
+    const chosen = [];
+    let group = null;
+    if (trouble) {
+      group = weightedPick(this.troubleGroups(), g => {
+        const avg = g.ids.reduce((s, id) => s + Progress.weight(id), 0) / g.ids.length;
+        return avg * (g.mine ? 1.5 : 1);
+      });
+      shuffle(group.ids).slice(0, n).forEach(id => chosen.push(id));
+    }
+    // New letters are introduced in alphabet order, a few at a time.
+    const unseen = LETTERS.filter(l => !Progress.rec(l.id).seen).map(l => l.id);
+    const active = LETTERS.filter(l => Progress.status(l.id) === 'learning').length;
+    const maxNew = active < 6 ? 3 : active < 10 ? 2 : 1;
+    let newCount = chosen.filter(id => unseen.includes(id)).length;
+    while (chosen.length < n) {
+      const nextNew = unseen.find(id => !chosen.includes(id));
+      const reviewPool = LETTERS.map(l => l.id).filter(id => Progress.rec(id).seen && !chosen.includes(id));
+      if (nextNew && newCount < maxNew) { chosen.push(nextNew); newCount++; }
+      else if (reviewPool.length) chosen.push(weightedPick(reviewPool, id => Progress.weight(id)));
+      else if (nextNew) { chosen.push(nextNew); newCount++; }
+      else break;
+    }
+    const finalChance = group && group.finalSigma != null ? group.finalSigma : DEFAULT_FINAL_SIGMA;
+    const lowerForms = {};
+    chosen.forEach(id => {
+      const l = BY_ID[id];
+      lowerForms[id] = l.alt && Math.random() < finalChance ? l.alt : l.lower;
+    });
+    return { letters: chosen.map(id => BY_ID[id]), group, lowerForms };
+  },
+};
+
+/* =====================================================================
+   5. SPEECH — Web Speech API, fails silently
+   ===================================================================== */
+const Speech = {
+  supported: typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined',
+  voice: null,
+  init() {
+    if (!this.supported) return;
+    try {
+      const choose = () => {
+        const vs = window.speechSynthesis.getVoices() || [];
+        this.voice = vs.find(v => /^en[-_](US|GB)/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+      };
+      choose();
+      window.speechSynthesis.addEventListener && window.speechSynthesis.addEventListener('voiceschanged', choose);
+    } catch (e) { /* ignore */ }
+  },
+  sayLetter(id) {
+    const l = BY_ID[id];
+    if (!l || !this.supported) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(l.tts || l.name);
+      if (this.voice) u.voice = this.voice;
+      u.lang = this.voice ? this.voice.lang : 'en-US';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* ignore */ }
+  },
+};
+
+/* =====================================================================
+   6. SMALL UI HELPERS
+   ===================================================================== */
+const $app = document.getElementById('app');
+const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SPEAKER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+const speakBtn = id => `<button class="speak" data-speak="${id}" aria-label="Say ${BY_ID[id].name}" title="Say ${BY_ID[id].name}">${SPEAKER_SVG}</button>`;
+const allForms = l => l.upper + ' ' + l.lower + (l.alt ? ' ' + l.alt : '');
+const statHTML = (num, label, id) => `<div class="stat"${id ? ` id="${id}"` : ''}><span class="stat-num">${num}</span><span class="meta">${label}</span></div>`;
+const seg = (setting, options, current) =>
+  `<div class="seg" role="group">${options.map(([val, text]) =>
+    `<button data-setting="${setting}" data-value="${val}" aria-pressed="${String(val) === String(current)}">${text}</button>`).join('')}</div>`;
+
+let toastTimer = 0;
+function toast(msg) {
+  let el = document.querySelector('.toast');
+  if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 2400);
+}
+
+/* =====================================================================
+   7. GAME MODES
+   A mode is { id, title, blurb, start(ctx) -> { destroy() } }.
+   The core picks the letters, runs the HUD and scoring, and applies
+   spaced repetition. A mode only renders into ctx.root and reports:
+     ctx.correct(id)          a letter was answered correctly
+     ctx.wrong(ids)           a wrong attempt involving these letter ids
+     ctx.confused(a, b)       a was mistaken for b (feeds Trouble letters)
+     ctx.setDone(done)        progress for the HUD bar (out of ctx.letters.length)
+     ctx.finish()             round over
+   Also available: ctx.letters, ctx.lowerForm(letter), ctx.speak(id),
+   ctx.settings, ctx.later(fn, ms) (timers cleared automatically).
+   ===================================================================== */
+const MODES = {};
+function registerMode(mode) { MODES[mode.id] = mode; }
+
+registerMode({
+  id: 'triple',
+  title: 'Triple match',
+  blurb: 'Tap the capital, the small letter and the name that belong together.',
+  start(ctx) {
+    const tiles = [];
+    for (const l of ctx.letters) {
+      tiles.push({ id: l.id, kind: 'upper' }, { id: l.id, kind: 'lower' }, { id: l.id, kind: 'name' });
+    }
+    const deck = shuffle(tiles).map((t, i) => ({ ...t, key: i }));
+
+    const tileHTML = t => {
+      const l = BY_ID[t.id];
+      if (t.kind === 'name') {
+        return `<div class="tile-wrap"><button class="tile tile-name" data-key="${t.key}" aria-pressed="false">
+          <span class="kind">name</span><span class="nm">${l.name}</span><span class="say">${l.say}</span></button>${speakBtn(l.id)}</div>`;
+      }
+      const ch = t.kind === 'upper' ? l.upper : ctx.lowerForm(l);
+      const kindLabel = t.kind === 'upper' ? 'capital' : (ch === l.alt ? 'small · final' : 'small');
+      return `<div class="tile-wrap"><button class="tile" data-key="${t.key}" aria-pressed="false" aria-label="${kindLabel} ${ch}">
+        <span class="kind" aria-hidden="true">${kindLabel}</span><span class="glyph" lang="el">${ch}</span></button></div>`;
+    };
+    ctx.root.innerHTML = `<div class="board" style="--cols:${ctx.letters.length}">${deck.map(tileHTML).join('')}</div>`;
+
+    const elOf = t => ctx.root.querySelector(`.tile[data-key="${t.key}"]`);
+    let sel = {};            // kind -> tile
+    let busy = false;
+    let matched = 0;
+    const locked = new Set();
+
+    const setSelected = (t, on) => {
+      const el = elOf(t);
+      el.classList.toggle('is-selected', on);
+      el.setAttribute('aria-pressed', String(on));
+    };
+    const clearSelection = () => { Object.values(sel).forEach(t => setSelected(t, false)); sel = {}; };
+
+    function evaluate() {
+      const picks = [sel.upper, sel.lower, sel.name];
+      const ids = [...new Set(picks.map(t => t.id))];
+      busy = true;
+      if (ids.length === 1) {
+        const id = ids[0];
+        picks.forEach(t => { locked.add(t.key); const el = elOf(t); el.classList.remove('is-selected'); el.classList.add('is-matched'); el.setAttribute('aria-disabled', 'true'); });
+        ctx.correct(id);
+        if (ctx.settings.speakOnMatch) ctx.speak(id);
+        matched++;
+        ctx.setDone(matched);
+        sel = {};
+        ctx.later(() => {
+          picks.forEach(t => elOf(t).classList.add('is-locked'));
+          busy = false;
+          if (matched === ctx.letters.length) ctx.later(ctx.finish, 350);
+        }, 450);
+      } else {
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) ctx.confused(ids[i], ids[j]);
+        ctx.wrong(ids);
+        picks.forEach(t => { const el = elOf(t); el.classList.remove('is-selected'); el.classList.add('is-wrong'); });
+        ctx.later(() => {
+          picks.forEach(t => { const el = elOf(t); el.classList.remove('is-wrong'); el.setAttribute('aria-pressed', 'false'); });
+          sel = {};
+          busy = false;
+        }, 420);
+      }
+    }
+
+    function onClick(e) {
+      const sp = e.target.closest('[data-speak]');
+      if (sp) { ctx.speak(sp.dataset.speak); return; }
+      const el = e.target.closest('.tile');
+      if (!el || busy) return;
+      const t = deck[Number(el.dataset.key)];
+      if (locked.has(t.key)) return;
+      if (sel[t.kind] && sel[t.kind].key === t.key) { setSelected(t, false); delete sel[t.kind]; return; }
+      if (sel[t.kind]) setSelected(sel[t.kind], false);   // one tile per kind: swap
+      sel[t.kind] = t;
+      setSelected(t, true);
+      if (sel.upper && sel.lower && sel.name) ctx.later(evaluate, 120);
+    }
+    const onKey = e => { if (e.key === 'Escape' && !busy) clearSelection(); };
+
+    ctx.root.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKey);
+    return {
+      destroy() {
+        ctx.root.removeEventListener('click', onClick);
+        document.removeEventListener('keydown', onKey);
+      },
+    };
+  },
+});
+
+/* =====================================================================
+   8. CORE ROUND LOOP
+   ===================================================================== */
+let currentMode = null;     // { destroy } of the running mode
+let timers = [];
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+function stopMode() { if (currentMode) { currentMode.destroy(); currentMode = null; } clearTimers(); }
+
+function startRound() {
+  stopMode();
+  const s = state.settings;
+  const mode = MODES[s.mode] || MODES.triple;
+  const pick = Picker.pick(s.roundSize, { trouble: s.trouble });
+  const round = {
+    mode: mode.id, letters: pick.letters, group: pick.group, lowerForms: pick.lowerForms,
+    hits: {}, misses: {}, confusions: {}, score: 0, bestStreak: 0, sets: 0, wrongs: 0,
+  };
+  const n = round.letters.length;
+  const g = round.group;
+
+  $app.innerHTML = `
+    <section class="view play">
+      <div class="hud">
+        <div>
+          <p class="label">Round ${state.stats.rounds + 1} · ${mode.title}</p>
+          ${g ? `<p class="trouble small"><span class="meta">trouble set</span> <span>${g.label}</span></p>` : ''}
+        </div>
+        <div class="stats">
+          ${statHTML('0', 'score', 'hudScore')}
+          ${statHTML(session.streak, 'streak', 'hudStreak')}
+          ${statHTML(`0/${n}`, 'sets', 'hudSets')}
+        </div>
+      </div>
+      <div class="bar"><span id="hudBar"></span></div>
+      <div id="stage"></div>
+      ${g ? `<p class="note">${g.note}</p>` : ''}
+      <div class="btn-row"><button class="btn btn-secondary" data-action="quit">Quit round</button></div>
+    </section>`;
+
+  const $score = document.querySelector('#hudScore .stat-num');
+  const $streak = document.querySelector('#hudStreak .stat-num');
+  const $sets = document.querySelector('#hudSets .stat-num');
+  const $bar = document.getElementById('hudBar');
+
+  const floatPoints = pts => {
+    const f = document.createElement('span');
+    f.className = 'float'; f.textContent = '+' + pts;
+    document.getElementById('hudScore').appendChild(f);
+    setTimeout(() => f.remove(), 800);
+  };
+
+  const ctx = {
+    root: document.getElementById('stage'),
+    letters: round.letters,
+    settings: s,
+    lowerForm: l => round.lowerForms[l.id] || l.lower,
+    speak: id => Speech.sayLetter(id),
+    later(fn, ms) { const t = setTimeout(fn, reducedMotion() ? Math.min(ms, 150) : ms); timers.push(t); return t; },
+    correct(id) {
+      session.streak += 1;
+      const pts = 10 + Math.min(session.streak - 1, 5) * 2;
+      round.score += pts;
+      round.sets += 1;
+      round.hits[id] = true;
+      round.bestStreak = Math.max(round.bestStreak, session.streak);
+      $score.textContent = round.score;
+      $streak.textContent = session.streak;
+      floatPoints(pts);
+    },
+    wrong(ids) {
+      session.streak = 0;
+      round.wrongs += 1;
+      ids.forEach(id => { round.misses[id] = (round.misses[id] || 0) + 1; });
+      $streak.textContent = 0;
+    },
+    confused(a, b) {
+      if (a === b) return;
+      const k = pairKey(a, b);
+      round.confusions[k] = (round.confusions[k] || 0) + 1;
+    },
+    setDone(done) {
+      $sets.textContent = `${done}/${n}`;
+      $bar.style.width = (100 * done / n) + '%';
+    },
+    finish() { endRound(round); },
+  };
+  currentMode = mode.start(ctx);
+}
+
+function endRound(round) {
+  stopMode();
+  const changes = Progress.applyRound(round);
+  renderSummary(round, changes);
+}
+
+/* =====================================================================
+   9. VIEWS
+   ===================================================================== */
+let view = 'lobby';
+let progressSelected = null;
+let confirmingReset = false;
+
+function setNav(v) {
+  document.querySelectorAll('.nav-btn[data-nav]').forEach(b => {
+    if (b.dataset.nav === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+}
+function go(v) {
+  stopMode();
+  view = v;
+  confirmingReset = false;
+  setNav(v === 'progress' ? 'progress' : 'lobby');
+  if (v === 'progress') renderProgress(); else renderLobby();
+  window.scrollTo(0, 0);
+}
+
+function renderLobby() {
+  const s = state.settings;
+  const c = Progress.counts();
+  const modes = Object.values(MODES);
+  $app.innerHTML = `
+    <section class="view lobby">
+      <p class="label">01 — Play</p>
+      <h1>Learn the Greek alphabet, one mix-up at a time.</h1>
+      <p class="lede">Each round mixes capitals, small letters and names on one board. Find the three that belong together. Letters you miss come back more often; letters you know fade into the background.</p>
+      <div class="stats">
+        ${statHTML(`${c.mastered}<span class="muted">/24</span>`, 'mastered')}
+        ${statHTML(c.learning, 'learning')}
+        ${statHTML(state.stats.rounds, 'rounds played')}
+        ${statHTML(state.stats.bestStreak, 'best streak')}
+      </div>
+
+      <div class="section">
+        <p class="label">Mode</p>
+        <div class="rows">
+          ${modes.map(m => `
+            <label class="row mode-row">
+              <input type="radio" name="mode" value="${m.id}" ${m.id === s.mode ? 'checked' : ''}>
+              <span class="row-text"><h3>${m.title}</h3><p class="small">${m.blurb}</p></span>
+              <span class="mode-mark">${m.id === s.mode ? 'selected' : 'select'}</span>
+            </label>`).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <p class="label">Settings</p>
+        <div class="rows">
+          <div class="row">
+            <div class="row-text"><h3>Trouble letters</h3><p class="small">Puts look-alikes in the same round: ν ρ η χ ω γ against v p n x w y, ζ against ξ, ν against υ, and Σ σ ς. Your own frequent mix-ups join in too.</p></div>
+            ${seg('trouble', [['false', 'Off'], ['true', 'On']], s.trouble)}
+          </div>
+          <div class="row">
+            <div class="row-text"><h3>Letters per round</h3><p class="small">Each letter adds three tiles to the board.</p></div>
+            ${seg('roundSize', [[4, '4'], [5, '5'], [6, '6']], s.roundSize)}
+          </div>
+          <div class="row">
+            <div class="row-text"><h3>Say the name on a match</h3><p class="small">${Speech.supported ? 'Uses your browser\'s built-in speech voice.' : 'Speech isn\'t available in this browser.'}</p></div>
+            ${Speech.supported ? seg('speakOnMatch', [['false', 'Off'], ['true', 'On']], s.speakOnMatch) : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row"><button class="btn btn-primary" data-action="start">Start round</button></div>
+      ${Store.available ? '' : '<p class="note">Progress can\'t be saved in this browser (storage is blocked), so it will reset when you close the page.</p>'}
+    </section>`;
+}
+
+function renderSummary(round, changes) {
+  setNav('lobby');
+  const missed = round.letters.filter(l => round.misses[l.id]).sort((a, b) => round.misses[b.id] - round.misses[a.id]);
+  const attempts = round.sets + round.wrongs;
+  const acc = attempts ? Math.round(100 * round.sets / attempts) : 100;
+  const mixedWith = id => Object.keys(round.confusions)
+    .map(k => k.split('|')).filter(p => p.includes(id))
+    .map(p => BY_ID[p[0] === id ? p[1] : p[0]]);
+  const nowMastered = changes.filter(c => c.after === 'mastered').map(c => BY_ID[c.id]);
+  const slipped = changes.filter(c => c.before === 'mastered').map(c => BY_ID[c.id]);
+  const title = missed.length === 0 ? 'Perfect round.' : missed.length === 1 ? 'One letter to review.' : `${missed.length} letters to review.`;
+
+  $app.innerHTML = `
+    <section class="view summary">
+      <p class="label">Round ${state.stats.rounds} complete</p>
+      <h1>${title}</h1>
+      <div class="stats">
+        ${statHTML(round.score, 'score')}
+        ${statHTML(acc + '%', 'accuracy')}
+        ${statHTML(round.bestStreak, 'best streak this round')}
+        ${statHTML(round.wrongs, 'wrong picks')}
+      </div>
+      ${nowMastered.length ? `<p>Now mastered: <span class="greek">${nowMastered.map(l => l.lower).join(' ')}</span> (${nowMastered.map(l => l.name).join(', ')}).</p>` : ''}
+      ${slipped.length ? `<p class="muted">Slipped back to learning: <span class="greek">${slipped.map(l => l.lower).join(' ')}</span>.</p>` : ''}
+
+      ${missed.length ? `
+      <div class="section">
+        <h2>Letters you got wrong</h2>
+        <div>
+          ${missed.map(l => {
+            const w = mixedWith(l.id);
+            return `<div class="review">
+              <div class="review-glyphs" lang="el">${allForms(l)}</div>
+              <div class="review-body">
+                <h3>${l.name} <span class="meta">${l.say}</span></h3>
+                <p class="meta">missed ${round.misses[l.id]}×${w.length ? ` · mixed up with <span class="greek">${w.map(x => x.lower).join(' ')}</span> ${w.map(x => x.name).join(', ')}` : ''}</p>
+                ${l.note ? `<p class="note">${l.note}</p>` : ''}
+              </div>
+              ${speakBtn(l.id)}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : `<p class="lede muted">Every set matched on the first try. These letters will now show up less often.</p>`}
+
+      <div class="btn-row">
+        <button class="btn btn-primary" data-action="start">Next round</button>
+        <button class="btn btn-secondary" data-nav="progress">See progress</button>
+      </div>
+    </section>`;
+}
+
+function renderProgress() {
+  const c = Progress.counts();
+  const sel = progressSelected ? BY_ID[progressSelected] : null;
+  const mix = Progress.topConfusions(6);
+  const meter = id => {
+    const b = Progress.rec(id).box;
+    return `<span class="meter" aria-hidden="true">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= b ? 'on' : ''}"></i>`).join('')}</span>`;
+  };
+
+  let detail = '<p class="note">Select a letter to see its forms, pronunciation and your history with it.</p>';
+  if (sel) {
+    const r = Progress.rec(sel.id), acc = Progress.accuracy(sel.id), st = Progress.status(sel.id);
+    const conf = Progress.confusionsFor(sel.id).slice(0, 4);
+    detail = `
+      <div class="detail">
+        <div class="detail-glyphs" lang="el">${allForms(sel)}</div>
+        <div class="detail-body">
+          <div class="detail-title"><h2>${sel.name}</h2>${speakBtn(sel.id)}</div>
+          <div class="kv small">
+            <span class="meta">say</span><span>${sel.say}</span>
+            <span class="meta">modern greek</span><span><span lang="el" class="greek">${sel.modern.name}</span> · ${sel.modern.say}</span>
+            <span class="meta">status</span><span>${st}${r.seen ? ` · level ${r.box}/${MAX_BOX}` : ''}</span>
+            <span class="meta">accuracy</span><span>${acc == null ? 'not played yet' : `${Math.round(acc * 100)}% · ${r.hits} matched, ${r.misses} missed`}</span>
+            ${conf.length ? `<span class="meta">mixed up with</span><span>${conf.map(x => { const o = BY_ID[x.ids[0] === sel.id ? x.ids[1] : x.ids[0]]; return `<span class="greek">${o.lower}</span> ${o.name} (${x.n}×)`; }).join(' · ')}</span>` : ''}
+          </div>
+          ${sel.note ? `<p class="note">${sel.note}</p>` : ''}
+        </div>
+      </div>`;
+  }
+
+  $app.innerHTML = `
+    <section class="view progress">
+      <p class="label">02 — Progress</p>
+      <h1>Your alphabet</h1>
+      <div class="stats">
+        ${statHTML(c.mastered, 'mastered')}
+        ${statHTML(c.learning, 'learning')}
+        ${statHTML(c.new, 'new')}
+      </div>
+      <div class="legend meta">
+        <span><i class="sw m-new"></i>new</span>
+        <span><i class="sw m-learning"></i>learning</span>
+        <span><i class="sw m-mastered"></i>mastered</span>
+      </div>
+      <div class="alpha">
+        ${LETTERS.map(l => {
+          const st = Progress.status(l.id);
+          return `<button class="atile m-${st}" data-letter="${l.id}" aria-pressed="${l.id === progressSelected}" aria-label="${l.name}, ${st}">
+            <span class="glyph" lang="el">${l.upper}${l.lower}</span><span class="meta">${l.name}</span>${meter(l.id)}</button>`;
+        }).join('')}
+      </div>
+      <div id="detail">${detail}</div>
+
+      <div class="section">
+        <h2>Your mix-ups</h2>
+        ${mix.length ? `<div class="rows">${mix.map(m => {
+          const [a, b] = m.ids.map(id => BY_ID[id]);
+          return `<div class="row"><span><span class="greek" style="font-size:24px">${a.upper}${a.lower}</span> <span class="muted">and</span> <span class="greek" style="font-size:24px">${b.upper}${b.lower}</span>
+            <span class="meta">&nbsp;${a.name} · ${b.name}</span></span><span class="meta">${m.n}×</span></div>`;
+        }).join('')}</div>
+        <p class="note">Turn on Trouble letters to practise pairs you mix up two or more times.</p>` : '<p class="note">No mix-ups recorded yet.</p>'}
+      </div>
+
+      <div class="section">
+        <h2>Start over</h2>
+        ${confirmingReset ? `
+          <div class="confirm" role="alertdialog" aria-labelledby="confirmTitle">
+            <h3 id="confirmTitle">Reset all progress?</h3>
+            <p class="small">This clears mastery, mix-ups and stats for all 24 letters. Your settings stay. This can't be undone.</p>
+            <div class="btn-row">
+              <button class="btn btn-primary" data-action="reset-yes">Reset progress</button>
+              <button class="btn btn-secondary" data-action="reset-no">Cancel</button>
+            </div>
+          </div>` : `<div class="btn-row"><button class="btn btn-secondary" data-action="reset">Reset progress</button></div>`}
+      </div>
+    </section>`;
+  if (confirmingReset) { const b = $app.querySelector('[data-action="reset-no"]'); b && b.focus(); }
+}
+
+/* =====================================================================
+   10. THEME + EVENTS + INIT
+   ===================================================================== */
+const THEMES = ['auto', 'light', 'dark'];
+function applyTheme() {
+  const t = state.settings.theme;
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t;
+}
+
+document.addEventListener('click', e => {
+  const nav = e.target.closest('[data-nav]');
+  if (nav) { go(nav.dataset.nav); return; }
+
+  const sp = e.target.closest('[data-speak]');
+  if (sp && !e.target.closest('#stage')) { Speech.sayLetter(sp.dataset.speak); return; }
+
+  const set = e.target.closest('[data-setting]');
+  if (set) {
+    const key = set.dataset.setting, raw = set.dataset.value;
+    state.settings[key] = key === 'roundSize' ? Number(raw) : raw === 'true';
+    save();
+    set.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === set)));
+    return;
+  }
+
+  const letter = e.target.closest('[data-letter]');
+  if (letter) {
+    progressSelected = progressSelected === letter.dataset.letter ? null : letter.dataset.letter;
+    renderProgress();
+    if (progressSelected) {
+      const d = document.getElementById('detail');
+      if (d && d.getBoundingClientRect().top > window.innerHeight) d.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
+      const t = $app.querySelector(`[data-letter="${progressSelected}"]`); t && t.focus();
+    }
+    return;
+  }
+
+  const act = e.target.closest('[data-action]');
+  if (!act) return;
+  switch (act.dataset.action) {
+    case 'start': startRound(); window.scrollTo(0, 0); break;
+    case 'quit': go('lobby'); break;
+    case 'reset': confirmingReset = true; renderProgress(); break;
+    case 'reset-no': confirmingReset = false; renderProgress(); break;
+    case 'reset-yes':
+      Progress.reset(); confirmingReset = false; progressSelected = null;
+      renderProgress(); toast('Progress reset.');
+      break;
+  }
+});
+
+document.addEventListener('change', e => {
+  if (e.target.name === 'mode') {
+    state.settings.mode = e.target.value;
+    save();
+    renderLobby();
+  }
+});
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const i = THEMES.indexOf(state.settings.theme);
+  state.settings.theme = THEMES[(i + 1) % THEMES.length];
+  save();
+  applyTheme();
+});
+
+if (!Speech.supported) document.documentElement.classList.add('no-speech');
+Speech.init();
+applyTheme();
+go('lobby');
+</script>
+</body>
+</html>
